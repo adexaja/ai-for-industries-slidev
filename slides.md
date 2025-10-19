@@ -67,17 +67,6 @@ transition: slide-up
 5. Arsitektur modern + praktik implementasi
 6. Mitos vs Fakta + langkah awal
 
-::right::
-
-# Outcome First
-
-- Kurangi downtime mesin 10–30%
-- Efisiensi stok 5–15%
-- Turunkan fraud chargeback 20%+
-- Percepat inspeksi visual 5×
-
-<small class="op60">Angka indikatif dari studi publik & pengalaman proyek</small>
-
 ---
 
 # Landscape AI (ringkas)
