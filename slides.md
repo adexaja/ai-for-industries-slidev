@@ -209,7 +209,6 @@ importance_df = pd.DataFrame({
     'importance': mdl.feature_importances_
 }).sort_values('importance', ascending=False)
 print(importance_df.head(10).to_string(index=False))
-``
 ```
 
 <small class="op60">Mulai dari baseline sederhana → iterasi fitur → kalibrasi → monitoring</small>
@@ -220,9 +219,7 @@ print(importance_df.head(10).to_string(index=False))
 **Kasus**: deteksi cacat produk (retak, gores, lubang) dari citra pabrik.
 
 **Goal**: kurangi inspeksi manual, *early reject* otomatis.
-```
 
-```
 ```python {all|1-7|9-14|16-23|all}
 # OpenCV Edge (baseline)
 import cv2, numpy as np, urllib.request
@@ -247,7 +244,7 @@ plt.axis('off')
 
 plt.tight_layout()
 plt.show()
-``
+```
 
 <v-click>
 <div class="mt-4 op80">Naikkan tingkat: fine-tune ResNet/YOLO + data augmentasi + active learning.</div>
