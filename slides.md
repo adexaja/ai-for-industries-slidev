@@ -140,22 +140,76 @@ D -->|A/B & Monitor| E[ROI]
 **Goal**: klasifikasi *fault type* / *at-risk* untuk scheduling maintenance.
 
 ```python {all|1-7|9-14|16-23|all}
-# Random Forest (baseline)
+# Random Forest for Fault Detection
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.preprocessing import StandardScaler
 
-url = "https://raw.githubusercontent.com/jbrownlee/Datasets/master/faults.csv"
-Xy = pd.read_csv(url)
+# Option 1: Using UCI Steel Plates Faults dataset
+try:
+    from ucimlrepo import fetch_ucirepo
+    steel_plates_faults = fetch_ucirepo(id=198)
+    X = steel_plates_faults.data.features
+    y = steel_plates_faults.data.targets['Pastry'].astype(int)  # Binary: Pastry fault
+    print("✓ Loaded UCI Steel Plates Faults dataset")
+except:
+    # Option 2: Generate synthetic fault detection data
+    print("⚠ Generating synthetic fault detection data...")
+    np.random.seed(42)
+    n_samples = 1941  # Similar to original
+    n_features = 27
+    
+    # Generate features with correlations (simulating sensor readings)
+    X = pd.DataFrame()
+    for i in range(n_features):
+        X[f'feature_{i+1}'] = np.random.randn(n_samples) * np.random.uniform(10, 100)
+    
+    # Create binary target with realistic class imbalance
+    y = pd.Series(np.random.choice([0, 1], size=n_samples, p=[0.65, 0.35]))
+    
+    # Add some correlations between features and target
+    for col in X.columns[:5]:
+        X[col] = X[col] + y * np.random.uniform(20, 50)
 
-target = 'Class' if 'Class' in Xy.columns else Xy.columns[-1]
-X = Xy.drop(columns=[target])
-y = Xy[target]
+print(f"\nDataset shape: {X.shape}")
+print(f"Class distribution:\n{y.value_counts()}\n")
 
-Xtr,Xte,ytr,yte = train_test_split(X,y,test_size=0.2,random_state=42)
-mdl = RandomForestClassifier(n_estimators=200,random_state=42,n_jobs=-1).fit(Xtr,ytr)
-print(classification_report(yte, mdl.predict(Xte)))
+# Split data
+Xtr, Xte, ytr, yte = train_test_split(X, y, test_size=0.2, random_state=42, stratify=y)
+
+# Train Random Forest
+print("Training Random Forest...")
+mdl = RandomForestClassifier(
+    n_estimators=200, 
+    random_state=42, 
+    n_jobs=-1,
+    max_depth=15,
+    min_samples_split=10
+).fit(Xtr, ytr)
+
+# Predictions
+ypred = mdl.predict(Xte)
+
+# Results
+print("\n" + "="*60)
+print("CLASSIFICATION REPORT")
+print("="*60)
+print(classification_report(yte, ypred))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(yte, ypred))
+
+# Feature importance
+print("\nTop 10 Most Important Features:")
+importance_df = pd.DataFrame({
+    'feature': X.columns,
+    'importance': mdl.feature_importances_
+}).sort_values('importance', ascending=False)
+print(importance_df.head(10).to_string(index=False))
+``
 ```
 
 <small class="op60">Mulai dari baseline sederhana → iterasi fitur → kalibrasi → monitoring</small>
@@ -166,20 +220,34 @@ print(classification_report(yte, mdl.predict(Xte)))
 **Kasus**: deteksi cacat produk (retak, gores, lubang) dari citra pabrik.
 
 **Goal**: kurangi inspeksi manual, *early reject* otomatis.
+```
 
-```python {all|1-6|8-15|17-22|all}
+```
+```python {all|1-7|9-14|16-23|all}
 # OpenCV Edge (baseline)
 import cv2, numpy as np, urllib.request
 import matplotlib.pyplot as plt
 
-url = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Checkerboard_pattern.svg/512px-Checkerboard_pattern.svg.png"
+url = "https://surabaya.proxsisgroup.com/wp-content/uploads/valve.jpg"
 urllib.request.urlretrieve(url, "sample.png")
 img = cv2.imread("sample.png")
 
 edges = cv2.Canny(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY), 100, 200)
-plt.imshow(edges, cmap='gray'); plt.axis('off'); plt.title('Edge Map')
+# Show result
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.imshow(cv2.cvtColor(img, cv2.COLOR_BGR2RGB))
+plt.title('Original')
+plt.axis('off')
+
+plt.subplot(1, 2, 2)
+plt.imshow(edges, cmap='gray')
+plt.title('Edge Map (Canny)')
+plt.axis('off')
+
+plt.tight_layout()
 plt.show()
-```
+``
 
 <v-click>
 <div class="mt-4 op80">Naikkan tingkat: fine-tune ResNet/YOLO + data augmentasi + active learning.</div>
